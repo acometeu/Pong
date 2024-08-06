@@ -37,6 +37,4 @@ UPGRADES :
 
 
 notes pour demain :
--casser la partie "movepaddleia" dans la function "movepaddle" en petit blocs reutilisable par paddle
--ia : implementer que si le paddle atteindra pas la balle n'essaye pas de la renvoyer
--lors du reset (avec 2 balles par ex) l'ia suit la balle meme si elles sont pas de sont cote jusqu'a qu'elle soit touche et apres le stand by marche
+si l'ia atteindra pas la balle mais que yen a qu'une essaye quand meme de l'attraper peut-etre car sinon il a l'air passif
