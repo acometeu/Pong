@@ -36,6 +36,9 @@ const paddleSpeed = 10;
 const paddleWidth = 25;
 const paddleHeight = 100;
 const paddleHeight4Players = 70;
+const paddleSpawn = (gameHeight - paddleHeight) / 2;
+const paddleSpawnTop = Math.floor((gameHeight - paddleHeight4Players) / 4 / 10) * 10;
+const paddleSpawnBottom = Math.floor((gameHeight - paddleHeight4Players) * 3 / 4 / 10) * 10;
 class Paddle{
     constructor(width, height, x, y, status, yMin, yMax){
         this.width = width;
@@ -181,7 +184,7 @@ function movePaddles(balls, fakeballs){
     if (Date.now() - time >= 1000)
     {
         for (let i = 0; i < balls.length; i++)
-            checkBallDestination(balls[i], fakeballs[i]);
+            checkBallDestination(balls[i], fakeballs[i], paddleHeight);
     }
 
     if (paddle1.status == IA)
@@ -189,7 +192,7 @@ function movePaddles(balls, fakeballs){
     if (paddle2.status == IA)
         movePaddlesIA(fakeballs, paddle2);
 };
-function checkBallDestination(ball, fakeball)
+function checkBallDestination(ball, fakeball, currentpaddleheight)
 {
     time = Date.now();
     fakeball.setValues(ball.speed, ball.x, ball.y, ball.xDirection, ball.yDirection);
@@ -203,7 +206,7 @@ function checkBallDestination(ball, fakeball)
     }
 
     // value rounded where ia will move to with angle variant
-    fakeball.y = Math.round(fakeball.y / paddleSpeed) * paddleSpeed + ((Math.round(Math.random()) - 0.5) * (paddleHeight - paddleSpeed * 4));
+    fakeball.y = Math.round(fakeball.y / paddleSpeed) * paddleSpeed + ((Math.round(Math.random()) - 0.5) * (currentpaddleheight - paddleSpeed * 4));
 }
 function checkCollisionFakeBall(fakeball){
     //ball bounced top and down
@@ -344,20 +347,24 @@ function updateScore(){
 // Pong for four Players
 
 function gameStart4Players(balls, fakeballs){
-    drawPaddles4Players();
+    drawPaddles4Players(balls, fakeballs);
     for(let i = 0; i < balls.length; i++)
         createBall(balls[i]);
     drawBall(balls[0]);
     nextTick4Players(balls, fakeballs);
+    // nextTick4Players(balls, fakeballs);
 };
 function nextTick4Players(balls, fakeballs){
     intervalID = setTimeout(() => {
         clearBoard();
-        movePaddles4Players();
+        movePaddles4Players(balls, fakeballs);
         drawPaddles4Players();
-        // moveBall(balls);
-        // drawBall(balls);
-        // checkCollision4Players(balls, fakeballs);
+        for(let i = 0; i < balls.length; i++)
+        {
+            moveBall(balls[i]);
+            drawBall(balls[i]);
+            checkCollision4Players(balls[i], fakeballs[i]);
+        }
         nextTick4Players(balls, fakeballs);
     }, 10)
 };
@@ -379,17 +386,17 @@ function movePaddles4Players(balls, fakeballs){
     if (Date.now() - time >= 1000)
     {
         for (let i = 0; i < balls.length; i++)
-            checkBallDestination(balls[i], fakeballs[i]);
+            checkBallDestination(balls[i], fakeballs[i], paddleHeight4Players);
     }
 
     if (paddle1.status == IA)
-        movePaddlesIA4Players(fakeballs, paddle1);
+        movePaddlesIA4PlayersTop(fakeballs, paddle1, paddle3);
     if (paddle2.status == IA)
-        movePaddlesIA4Players(fakeballs, paddle2);
+        movePaddlesIA4PlayersTop(fakeballs, paddle2, paddle4);
     if (paddle3.status == IA)
-        movePaddlesIA4Players(fakeballs, paddle3);
+        movePaddlesIA4PlayersBottom(fakeballs, paddle3, paddle1);
     if (paddle4.status == IA)
-        movePaddlesIA4Players(fakeballs, paddle4);
+        movePaddlesIA4PlayersBottom(fakeballs, paddle4, paddle2);
 };
 function movePaddles4PlayersHumanUpTop(paddletop, paddlebottom, paddleup, paddledown){
     // move humans top paddles (paddle 1 and 3)
@@ -401,8 +408,11 @@ function movePaddles4PlayersHumanUpTop(paddletop, paddlebottom, paddleup, paddle
         {
             paddletop.y += paddleSpeed;
             //check if ally collision with friendly paddle
-            if (paddletop.y > paddlebottom.y - paddlebottom.height)
+            if (paddletop.y + paddletop.height > paddlebottom.y)
+            {
                 paddlebottom.y += paddleSpeed;
+                console.log("TOP");
+            }
         }
     }
 }
@@ -421,129 +431,121 @@ function movePaddles4PlayersHumanUpBottom(paddlebottom, paddletop, paddleup, pad
             paddlebottom.y += paddleSpeed;
     }
 }
-// function searchNextTarget4Players(fakeballs, paddletop, paddlebootom, targetballtop, targetballbottom){
-//     for(let i = 1; i < fakeballs.length; i++)
-//         {
-//             if (targetball.ignore == false)
-//             {
-//                 // check priority ball
-//                 if (fakeballs[i].ignore == true || fakeballs[i].arrivalTime > targetball.arrivalTime)
-//                     continue;
-        
-//                 // check if ball in wrong direction
-//                 if ((fakeballs[i].xDirection > 0 && paddle.x) || (fakeballs[i].xDirection < 0 && !paddle.x))
-//                     continue;
-    
-//                 //check if ball accessible
-//                 if ((paddle.y - fakeballs[i].y > 0) && ((paddle.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-//                     continue;
-//                 if ((paddle.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddle.y - paddle.height) / paddleSpeed > fakeballs[i].arrivalTime))
-//                     continue;
-//             }
-//             targetball = fakeballs[i];
-//         }
-// }
-function movePaddlesIA4Players(fakeballs, paddletop, paddlebottom){
-    
-    // search next target
-    // let targetballtop = fakeballs[0];
-    // let targetballbottom = fakeballs[0];
-    // if (fakeballs.length > 1)
-    // {
-    //     if (fakeballs[0].y < gameHeight / 2)
-    //     {
-    //         targetballtop = fakeballs[0];
-    //         targetballbottom = fakeballs[1];
-    //         searchNextTarget4Players(fakeballs, paddletop, paddlebottom, targetballtop, targetballbottom);
-    //     }
-    //     else
-    //     {
-    //         targetballtop = fakeballs[0];
-    //         targetballbottom = fakeballs[1];
-    //     }
+function movePaddlesIA4PlayersTop(fakeballs, paddletop, paddlebottom){
+    //class all targetball in array by arrival time (first to last)
+    let targetballs = [];
+    getTargetBalls(paddletop, fakeballs, targetballs, true);
 
-    // }
-
-    // search next target
-    let targetball = fakeballs[0];
-    let targetballindex = 0;
-    for(let i = 1; i < fakeballs.length; i++)
-    {
-        if (targetball.ignore == false)
-        {
-            // check priority ball
-            if (fakeballs[i].ignore == true || fakeballs[i].arrivalTime > targetball.arrivalTime)
-                continue;
-    
-            // check if ball in wrong direction
-            if ((fakeballs[i].xDirection > 0 && paddle.x) || (fakeballs[i].xDirection < 0 && !paddle.x))
-                continue;
-
-            //check if ball accessible
-            if ((paddletop.y - fakeballs[i].y > 0) && ((paddletop.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-            {
-                if ((paddlebottom.y - fakeballs[i].y > 0) && ((paddlebottom.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-                if ((paddlebottom.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddlebottom.y - paddle.height) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-            }
-            if ((paddletop.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddletop.y - paddletop.height) / paddleSpeed > fakeballs[i].arrivalTime))
-            {
-                if ((paddlebottom.y - fakeballs[i].y > 0) && ((paddlebottom.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-                if ((paddlebottom.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddlebottom.y - paddlebottom.height) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-            }
-        }
-        targetball = fakeballs[i];
-        targetballindex = i;
-    }
-    //check which paddle is closer 
-    let targetballtop;
-    let targetballbottom;
-    if (paddletop.y + paddletop.height - targetball.y >= 0)
-        targetballtop = targetball;
-    else if (paddlebottom.y - targetball.y <= 0)
-        targetballbottom = targetball;
-    else if (targetball.y - paddletop.y - paddletop.height <= paddlebottom.y - targetball.y)
-        targetballtop = targetball;
+    // position where the ball go
+    if (targetballs.length)
+        movePaddleTopIa(targetballs[0], paddletop, paddlebottom);
     else
-        targetballbottom = targetball;
+        movePaddleToSpawnTop(paddletop, paddleSpawnTop, paddlebottom);
+}
+function movePaddlesIA4PlayersBottom(fakeballs, paddlebottom, paddletop){
+    //class all targetball in array by arrival time (first to last)
+    let targetballs = [];
+    getTargetBalls(paddlebottom, fakeballs, targetballs, false);
 
-    
-    // search second target for the other paddle
-    for(let i = 1; i < fakeballs.length; i++)
+    // position where the ball go
+    if (targetballs.length)
+        movePaddleBottomIa(targetballs[0], paddlebottom, paddletop);
+    else
+        movePaddleToSpawnBottom(paddlebottom, paddleSpawnBottom, paddletop);
+}
+function getTargetBalls(paddle, fakeballs, targetballs, istoppaddle){
+    for(let i = 0; i < fakeballs.length; i++)
     {
-        if (targetball.ignore == false && targetballindex != i)
-        {
-            // check priority ball
-            if (fakeballs[i].ignore == true || fakeballs[i].arrivalTime > targetball.arrivalTime)
-                continue;
-    
-            // check if ball in wrong direction
-            if ((fakeballs[i].xDirection > 0 && paddle.x) || (fakeballs[i].xDirection < 0 && !paddle.x))
-                continue;
+        // check if ball ignored
+        if (fakeballs[i].ignore == true)
+            continue;
 
-            //check if ball accessible
-            if ((paddletop.y - fakeballs[i].y > 0) && ((paddletop.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-            {
-                if ((paddlebottom.y - fakeballs[i].y > 0) && ((paddlebottom.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-                if ((paddlebottom.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddlebottom.y - paddle.height) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-            }
-            if ((paddletop.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddletop.y - paddletop.height) / paddleSpeed > fakeballs[i].arrivalTime))
-            {
-                if ((paddlebottom.y - fakeballs[i].y > 0) && ((paddlebottom.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-                if ((paddlebottom.y - fakeballs[i].y < 0) && ((fakeballs[i].y - paddlebottom.y - paddlebottom.height) / paddleSpeed > fakeballs[i].arrivalTime))
-                    continue;
-            }
-        }
-        targetball = fakeballs[i];
+        // check if ball in wrong direction
+        if ((fakeballs[i].xDirection > 0 && paddle.x) || (fakeballs[i].xDirection < 0 && !paddle.x))
+            continue;
+
+        //check if ball on top half
+        if (istoppaddle && fakeballs[i].y > gameHeight / 2)
+            continue
+        if (!istoppaddle && fakeballs[i].y <= gameHeight / 2)
+            continue
+
+        //check if ball accessible
+        if ((paddle.y - fakeballs[i].y > 0) && ((paddle.y - fakeballs[i].y) / paddleSpeed > fakeballs[i].arrivalTime))
+            continue;
+        if ((paddle.y - fakeballs[i].y < 0) && (fakeballs[i].y > paddle.y + paddle.height) && ((fakeballs[i].y - paddle.y - paddle.height) / paddleSpeed > fakeballs[i].arrivalTime))
+            continue;
+        ballAddAscendedSort(targetballs, fakeballs[i]);
     }
 }
-function checkCollision4Players(ball){
+function ballAddAscendedSort(targetballs, newtargetball){
+    let i = 0;
+    while (i < targetballs.length)
+    {
+        if (newtargetball.arrivalTime <= targetballs[i].arrivalTime)
+            break;
+        i++;
+    }
+    targetballs.splice(i, 0, newtargetball);
+}
+function movePaddleTopIa(fakeball, paddletop, paddlebottom){
+    if (paddletop.y >= paddletop.yMin && (paddletop.y + (paddletop.height / 2) > fakeball.y))
+        paddletop.y -= paddleSpeed;
+    else if (paddletop.y <= paddletop.yMax && (paddletop.y + (paddletop.height / 2) < fakeball.y))
+    {
+        paddletop.y += paddleSpeed;
+        //check if ally collision with friendly paddle
+        if (paddletop.y + paddletop.height > paddlebottom.y)
+            paddlebottom.y += paddleSpeed;
+    }
+}
+function movePaddleBottomIa(fakeball, paddlebottom, paddletop){
+    if (paddlebottom.y >= paddlebottom.yMin && (paddlebottom.y + (paddlebottom.height / 2) > fakeball.y))
+    {
+        // console.log("IA");
+        paddlebottom.y -= paddleSpeed;
+        //check if ally collision with friendly paddle
+        if (paddlebottom.y < paddletop.y + paddletop.height)
+        {
+            paddletop.y -= paddleSpeed;
+            // console.log("IA push");
+        }
+    }
+    else if (paddlebottom.y <= paddlebottom.yMax && (paddlebottom.y + (paddlebottom.height / 2) < fakeball.y))
+        paddlebottom.y += paddleSpeed;
+}
+function movePaddleToSpawnTop(paddletop, spawn, paddlebottom){
+    // go middle court (stand by)
+    if (paddletop.y > spawn)
+        paddletop.y -= paddleSpeed;
+    else if (paddletop.y < spawn)
+    {
+        paddletop.y += paddleSpeed;
+        //check if ally collision with friendly paddle
+        if (paddletop.y + paddletop.height > paddlebottom.y)
+            paddlebottom.y += paddleSpeed;
+    }
+}
+function movePaddleToSpawnBottom(paddlebottom, spawn, paddletop){
+    // go middle court (stand by)
+    if (paddlebottom.y > spawn)
+    {
+        // console.log("SPWAN");
+
+        paddlebottom.y -= paddleSpeed;
+        //check if ally collision with friendly paddle
+        if (paddlebottom.y < paddletop.y + paddletop.height)
+        {
+            paddletop.y -= paddleSpeed;
+            // console.log("SPAWN push");
+            console.log("BOTTOM");
+        }
+    }
+    else if (paddlebottom.y < spawn)
+        paddlebottom.y += paddleSpeed;
+    // console.log(`y = ${paddlebottom.y}`);
+}
+function checkCollision4Players(ball, fakeball){
     //ball bounced top and down
     if (ball.y <= 0 + ballRadius)
     {
@@ -562,6 +564,7 @@ function checkCollision4Players(ball){
         paddle2.score += 1;
         updateScore();
         createBall(ball);
+        fakeball.ignore = true;
         return;
     }
     if (ball.x >= gameWidth)
@@ -569,6 +572,7 @@ function checkCollision4Players(ball){
         paddle1.score += 1;
         updateScore();
         createBall(ball);
+        fakeball.ignore = true;
         return;
     }
     
@@ -580,12 +584,14 @@ function checkCollision4Players(ball){
             ball.x = paddle1.x + paddle1.width + ballRadius;
             ball.yDirection = (((ball.y - paddle1.y) / paddle1.height) -0.5) * ballFov * ball.speed;
             ball.xDirection = Math.sqrt((ball.speed ** 2) - (ball.yDirection ** 2));
+            fakeball.ignore = true;
         }
         else if(ball.y >= paddle3.y && ball.y <= paddle3.y + paddle3.height){
             ball.speed += ballIncr;
             ball.x = paddle3.x + paddle3.width + ballRadius;
             ball.yDirection = (((ball.y - paddle3.y) / paddle3.height) -0.5) * ballFov * ball.speed;
             ball.xDirection = Math.sqrt((ball.speed ** 2) - (ball.yDirection ** 2));
+            fakeball.ignore = true;
         }
     }
     else if (ball.x >= (paddle2.x - ballRadius))
@@ -595,12 +601,14 @@ function checkCollision4Players(ball){
             ball.x = paddle2.x - ballRadius;
             ball.yDirection = (((ball.y - paddle2.y) / paddle2.height) -0.5) * ballFov * ball.speed;
             ball.xDirection = -Math.sqrt((ball.speed ** 2) - (ball.yDirection ** 2));
+            fakeball.ignore = true;
         }
         else if (ball.y >= paddle4.y && ball.y <= paddle4.y + paddle4.height){
             ball.speed += ballIncr;
             ball.x = paddle4.x - ballRadius;
             ball.yDirection = (((ball.y - paddle4.y) / paddle4.height) -0.5) * ballFov * ball.speed;
             ball.xDirection = -Math.sqrt((ball.speed ** 2) - (ball.yDirection ** 2));
+            fakeball.ignore = true;
         }
     }
 };
@@ -619,8 +627,8 @@ function resetGame(){
     
     
     //set paddles
-    paddle1 = new Paddle(paddleWidth, paddleHeight, 0, (gameHeight - paddleHeight) / 2, paddle1.status, paddleSpeed, gameHeight - paddleHeight - paddleSpeed);
-    paddle2 = new Paddle(paddleWidth, paddleHeight, gameWidth - paddleWidth, (gameHeight - paddleHeight) / 2, paddle2.status, paddleSpeed, gameHeight - paddleHeight - paddleSpeed);
+    paddle1 = new Paddle(paddleWidth, paddleHeight, 0, paddleSpawn, paddle1.status, paddleSpeed, gameHeight - paddleHeight - paddleSpeed);
+    paddle2 = new Paddle(paddleWidth, paddleHeight, gameWidth - paddleWidth, paddleSpawn, paddle2.status, paddleSpeed, gameHeight - paddleHeight - paddleSpeed);
     paddle1.score = 0;
     paddle2.score = 0;
 
@@ -640,6 +648,10 @@ function resetGame(){
     gameStart(balls, fakeballs);
 };
 function reset4Players(){
+    console.log(paddleHeight4Players);
+    console.log(paddleSpawnTop)
+    console.log(paddleSpawnBottom)
+
     //set event listeners
     if (paddle3.status == OFFLINE)
     {
@@ -655,10 +667,10 @@ function reset4Players(){
     }
 
     //set paddles
-    paddle1 = new Paddle(paddleWidth, paddleHeight4Players, 0, Math.floor((gameHeight - paddleHeight4Players) / 4 / 10) * 10, paddle1.status, paddleSpeed, gameHeight - paddleHeight4Players * 2 - paddleSpeed);
-    paddle2 = new Paddle(paddleWidth, paddleHeight4Players, gameWidth - paddleWidth, Math.floor((gameHeight - paddleHeight4Players) / 4 / 10) * 10, paddle2.status, paddleSpeed, gameHeight - paddleHeight4Players * 2 - paddleSpeed);
-    paddle3 = new Paddle(paddleWidth, paddleHeight4Players, 0, Math.floor((gameHeight - paddleHeight4Players) * 3 / 4 / 10) * 10, paddle3.status, paddleSpeed + paddleHeight4Players, gameHeight - paddleHeight4Players - paddleSpeed);
-    paddle4 = new Paddle(paddleWidth, paddleHeight4Players, gameWidth - paddleWidth, Math.floor((gameHeight - paddleHeight4Players) * 3 / 4 / 10) * 10, paddle4.status, paddleSpeed + paddleHeight4Players, gameHeight - paddleHeight4Players - paddleSpeed);
+    paddle1 = new Paddle(paddleWidth, paddleHeight4Players, 0, paddleSpawnTop, paddle1.status, paddleSpeed, gameHeight - paddleHeight4Players * 2 - paddleSpeed);
+    paddle2 = new Paddle(paddleWidth, paddleHeight4Players, gameWidth - paddleWidth, paddleSpawnTop, paddle2.status, paddleSpeed, gameHeight - paddleHeight4Players * 2 - paddleSpeed);
+    paddle3 = new Paddle(paddleWidth, paddleHeight4Players, 0, paddleSpawnBottom, paddle3.status, paddleSpeed + paddleHeight4Players, gameHeight - paddleHeight4Players - paddleSpeed);
+    paddle4 = new Paddle(paddleWidth, paddleHeight4Players, gameWidth - paddleWidth, paddleSpawnBottom, paddle4.status, paddleSpeed + paddleHeight4Players, gameHeight - paddleHeight4Players - paddleSpeed);
     paddle1.score = 0;
     paddle2.score = 0;
 

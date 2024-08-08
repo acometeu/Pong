@@ -29,12 +29,16 @@ modules a faire (lire le sujet) :
 -ia;
 -multiplayer en local a plus que 2 joueurs
 -matchmaking/tournoi
+-remote player
 
 
-
-UPGRADES :
--faire un sorte que si la direction y change le x diminue (pour que la vitesse soit constante car sinon il est aussi rapide en diago que tout droit ce qui n'est pas logique)
 
 
 notes pour demain :
-si l'ia atteindra pas la balle mais que yen a qu'une essaye quand meme de l'attraper peut-etre car sinon il a l'air passif
+-si l'ia atteindra pas la balle mais que yen a qu'une essaye quand meme de l'attraper peut-etre car sinon il a l'air passif
+-joindre "movepaddleIA" et "movepaddleIAmiddlecourt" en 1 fonction appelle 2 fois
+-enlever targetball et "l'implementer" dans fakeballs (changer la facon dont ca marche pour opti)
+-ajouter une limite de vitesse pour les balles
+-faire un sorte que les balles ne traversent pas a une certaine vitesse
+-peut-etre regler le probleme de vitesse doubler  ( ex si player 1 descend en poussant player 3 et player 3 descend player 3 se deplace de 2 fois paddlespeed)
+-corriger le 1 * paddleSpeed d'espace quand ya conflit entre 2 paddles allies au bords 
