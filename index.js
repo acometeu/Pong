@@ -19,6 +19,7 @@ gameBoard.width = gameWidth;
 gameBoard.height = gameHeight;
 const boardBackground = "white";
 let intervalID;
+const ACTUALISATIONIA = 1000;
 
 //paddle
 const OFFLINE = 0;
@@ -70,6 +71,8 @@ const ballInitialSpeed = 2.2;
 const ballIncr = 0.2;
 // 100 put y axe incr at -1 to 1 
 const ballFov = 90 / 100 * 2;
+let ballSpawnX = gameWidth / 2;
+let ballSpawnY = gameHeight / 2;
 class Ball{
     constructor(speed, x, y, xDirection, yDirection){
         this.speed = speed;
@@ -124,10 +127,9 @@ let time = -1000;
 
 
 
-// Pong for two Players
-
 resetGame();
 
+// Pong for two Players
 function gameStart(balls, fakeballs){
     drawPaddles();
     for(let i = 0; i < balls.length; i++)
@@ -155,10 +157,12 @@ function drawPaddles(){
     context.fillRect(paddle2.x, paddle2.y, paddle2.width, paddle2.height);
 };
 function createBall(ball){
-    ball.x = gameWidth / 2;
-    ball.y = gameHeight / 2;
+    ball.x = ballSpawnX;
+    ball.y = ballSpawnY;
     ball.speed = ballInitialSpeed;
+    // put random angle on y axis
     ball.yDirection = (Math.random() - 0.5) * ballFov * ball.speed;
+    // pythagore calcul base on yDirection and paddleSpeed (paddleSpeed = hypothenus)
     ball.xDirection = Math.sqrt((ball.speed ** 2) - (ball.yDirection ** 2));
     if (Math.round(Math.random()) == 1)
         ball.xDirection *= -1;
@@ -186,7 +190,7 @@ function movePaddles(balls, fakeballs){
     
 
     //update ball position every 1 second
-    if (Date.now() - time >= 1000)
+    if (Date.now() - time >= ACTUALISATIONIA)
     {
         for (let i = 0; i < balls.length; i++)
             checkBallDestination(balls[i], fakeballs[i], paddleHeight);
@@ -357,7 +361,6 @@ function gameStart4Players(balls, fakeballs){
         createBall(balls[i]);
     drawBall(balls[0]);
     nextTick4Players(balls, fakeballs);
-    // nextTick4Players(balls, fakeballs);
 };
 function nextTick4Players(balls, fakeballs){
     intervalID = setTimeout(() => {
@@ -381,29 +384,29 @@ function drawPaddles4Players(){
     context.fillRect(paddle4.x, paddle4.y, paddle4.width, paddle4.height);
 };
 function movePaddles4Players(balls, fakeballs){
-    movePaddles4PlayersHumanUpTop(paddle1, paddle3, paddle1up, paddle1down);
-    movePaddles4PlayersHumanUpTop(paddle2, paddle4, paddle2up, paddle2down);
-    movePaddles4PlayersHumanUpTop(paddle3, paddle1, paddle3up, paddle3down);
-    movePaddles4PlayersHumanUpTop(paddle4, paddle2, paddle4up, paddle4down);
-
-
     //check ball position every 1 second
-    if (Date.now() - time >= 1000)
+    if (Date.now() - time >= ACTUALISATIONIA)
     {
         for (let i = 0; i < balls.length; i++)
             checkBallDestination(balls[i], fakeballs[i], paddleHeight4Players);
     }
 
     if (paddle1.status == IA)
-        movePaddlesIA4PlayersTop(fakeballs, paddle1, paddle3, paddleSpawnTop);
+        movePaddlesIA4Players(fakeballs, paddle1, paddle3, paddleSpawnTop);
     if (paddle2.status == IA)
-        movePaddlesIA4PlayersTop(fakeballs, paddle2, paddle4, paddleSpawnTop);
+        movePaddlesIA4Players(fakeballs, paddle2, paddle4, paddleSpawnTop);
     if (paddle3.status == IA)
-        movePaddlesIA4PlayersTop(fakeballs, paddle3, paddle1, paddleSpawnBottom);
+        movePaddlesIA4Players(fakeballs, paddle3, paddle1, paddleSpawnBottom);
     if (paddle4.status == IA)
-        movePaddlesIA4PlayersTop(fakeballs, paddle4, paddle2, paddleSpawnBottom);
+        movePaddlesIA4Players(fakeballs, paddle4, paddle2, paddleSpawnBottom);
+
+
+    movePaddles4PlayersHuman(paddle1, paddle3, paddle1up, paddle1down);
+    movePaddles4PlayersHuman(paddle2, paddle4, paddle2up, paddle2down);
+    movePaddles4PlayersHuman(paddle3, paddle1, paddle3up, paddle3down);
+    movePaddles4PlayersHuman(paddle4, paddle2, paddle4up, paddle4down);
 };
-function movePaddles4PlayersHumanUpTop(paddle, paddleally, paddleup, paddledown){
+function movePaddles4PlayersHuman(paddle, paddleally, paddleup, paddledown){
     // move humans top paddles (paddle 1 and 3)
     if (!keys[paddleup] || !keys[paddledown])
     {
@@ -423,16 +426,16 @@ function movePaddles4PlayersHumanUpTop(paddle, paddleally, paddleup, paddledown)
         }
     }
 }
-function movePaddlesIA4PlayersTop(fakeballs, paddle, paddleally, currentSpwan){
+function movePaddlesIA4Players(fakeballs, paddle, paddleally, currentSpwan){
     //class all targetball in array by arrival time (first to last)
     let targetballs = [];
     getTargetBalls(paddle, fakeballs, targetballs);
 
     // position where the ball go
     if (targetballs.length)
-        movePaddleTopIa(targetballs[0], paddle, paddleally);
+        movePaddleIa(targetballs[0], paddle, paddleally);
     else
-        movePaddleToSpawnTop(currentSpwan, paddle, paddleally);
+        movePaddleToSpawn(currentSpwan, paddle, paddleally);
 }
 function getTargetBalls(paddle, fakeballs, targetballs){
     for(let i = 0; i < fakeballs.length; i++)
@@ -469,7 +472,7 @@ function ballAddAscendedSort(targetballs, newtargetball){
     }
     targetballs.splice(i, 0, newtargetball);
 }
-function movePaddleTopIa(fakeball, paddle, paddleally){
+function movePaddleIa(fakeball, paddle, paddleally){
     if (paddle.y >= paddle.yMin && (paddle.y + (paddle.height / 2) > fakeball.y))
     {
         paddle.y -= paddleSpeed;
@@ -485,20 +488,20 @@ function movePaddleTopIa(fakeball, paddle, paddleally){
             paddleally.y += paddleSpeed;
     }
 }
-function movePaddleToSpawnTop(spawn, paddle, paddleally){
+function movePaddleToSpawn(spawn, paddle, paddleally){
     // go middle court (stand by)
-    if (paddle.y > spawn)
+    if (paddle.y >= paddle.yMin && paddle.y > spawn)
     {
         paddle.y -= paddleSpeed;
         //check if ally collision with friendly paddle
-        if (paddleally.y < paddle.y + paddle.height)
-            paddle.y -= paddleSpeed;
+        if (paddle.position == BOTTOM && paddle.y < paddleally.y + paddleally.height)
+            paddleally.y -= paddleSpeed;
     }
-    else if (paddle.y < spawn)
+    else if (paddle.y <= paddle.yMax && paddle.y < spawn)
     {
         paddle.y += paddleSpeed;
         //check if ally collision with friendly paddle
-        if (paddle.y + paddle.height > paddleally.y)
+        if (paddle.position == TOP && paddle.y + paddle.height > paddleally.y)
             paddleally.y += paddleSpeed;
     }
 }
