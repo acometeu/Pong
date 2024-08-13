@@ -20,6 +20,8 @@ gameBoard.height = gameHeight;
 const boardBackground = "white";
 let intervalID;
 const ACTUALISATIONIA = 1000;
+let scoreToWin = 1;
+let gameIsFinished = false;
 
 //paddle
 const OFFLINE = 0;
@@ -148,7 +150,8 @@ function nextTick(balls, fakeballs){
             drawBall(balls[i]);
             checkCollision(balls[i], fakeballs[i]);
         }
-        nextTick(balls, fakeballs);
+        if (!gameIsFinished)
+            nextTick(balls, fakeballs);
     }, 10)
 };
 function drawPaddles(){
@@ -348,6 +351,11 @@ function clearBoard(){
 };
 function updateScore(){
     scoreText.textContent = `${paddle1.score} : ${paddle2.score}`;
+    if (paddle1.score >= scoreToWin || paddle2.score >= scoreToWin)
+    {
+        clearInterval(intervalID);
+        gameIsFinished = true;
+    }
 };
 
 
@@ -373,7 +381,8 @@ function nextTick4Players(balls, fakeballs){
             drawBall(balls[i]);
             checkCollision4Players(balls[i], fakeballs[i]);
         }
-        nextTick4Players(balls, fakeballs);
+        if (!gameIsFinished)
+            nextTick4Players(balls, fakeballs);
     }, 10)
 };
 function drawPaddles4Players(){
@@ -603,6 +612,8 @@ function resetGame(){
         fakeballs.push(fakeball);
     }
 
+
+    gameIsFinished = false;
     updateScore();
     clearInterval(intervalID);
     gameStart(balls, fakeballs);
@@ -645,6 +656,7 @@ function reset4Players(){
         fakeballs.push(fakeball);
     }
 
+    gameIsFinished = false;
     updateScore();
     clearInterval(intervalID);
     gameStart4Players(balls, fakeballs);
