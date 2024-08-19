@@ -40,3 +40,39 @@ notes pour demain :
 -ajouter une limite de vitesse pour les balles
 -faire un sorte que les balles ne traversent pas a une certaine vitesse
 -peut-etre regler le probleme de vitesse doubler  ( ex si player 1 descend en poussant player 3 et player 3 descend player 3 se deplace de 2 fois paddlespeed)
+
+
+
+notes changement a faire dans le projet main:
+-position paddle ia enlever derniere condition pour savoir si la balle est accessible car deja fait avant et en plus elle est pas bonne
+-etre sur que le bot prends AU MOINS 1000 microsecodnes pour actualiser les infos
+-apporter le fix sur angle variant random paddle ia
+-changer paddleheight4players a 80
+-enlever le "* ballSpeed" dans moveball
+-mettre une vitesse max pour la balle
+-faire les check collisions reels (pas juste avec la nouvelle pose de la balle)
+
+
+
+save:
+        for(let i = 0; i < balls.length; i++)
+        {
+            //test
+            let step = Math.ceil(balls[i].speed / ballRadius);
+            let xIncr = balls[i].xDirection / step;
+            let yIncr = balls[i].yDirection / step;
+            for(let j = 0; j < step; j++)
+            {
+                console.log("test")
+                moveBall(balls[i], xIncr, yIncr);
+                checkCollision(balls[i], fakeballs[i]);
+            }
+
+
+            // moveBall(balls[i]);
+            // checkCollision(balls[i], fakeballs[i]);
+            drawBall(balls[i]);
+        }
+
+
+
